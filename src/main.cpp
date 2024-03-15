@@ -41,8 +41,17 @@ void registerMachine() {
   // Function to register machine input
   String URL = String(memory.url);
 
+
+
   // Check if memory.url is null-terminated
   if (isNullTerminated(memory.url)) {
+    // Check if the URL contains "http"
+    if (URL.indexOf("http") != -1) {
+      Serial.println("URL contains 'http'");
+    } else {
+      Serial.println("URL does not contain 'http'");
+      return; // Exit function early on error
+    }
     Serial.println();
     Serial.print("Destination URL: ");
     Serial.print(URL);
