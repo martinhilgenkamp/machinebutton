@@ -28,6 +28,34 @@ String LEDState = "off";
 HTTPClient http;
 WiFiClient wifiClient;
 
+void ledFeedback(bool success) {
+  Serial.println("LED Flash initiated");
+  unsigned long startTime = millis(); // Get the current time
+
+  // Blink the LED for 5 seconds
+  while (millis() - startTime < 5000) { // Run for 5000ms (5 seconds)
+    if (success) {
+      // Blink the LED quickly twice for success
+      for (int i = 0; i < 2; i++) {
+        digitalWrite(LED, HIGH);
+        delay(100);
+        digitalWrite(LED, LOW);
+        delay(100);
+      }
+    } else {
+      // Blink the LED slowly five times for failure
+      for (int i = 0; i < 5; i++) {
+        digitalWrite(LED, HIGH);
+        delay(500);
+        digitalWrite(LED, LOW);
+        delay(500);
+      }
+    }
+  }
+  // Reset the LED after the loop
+  digitalWrite(LED, HIGH);
+}
+
 bool isNullTerminated(const char* str) {
     for (int i = 0; str[i] != '\0'; i++) {
         // Iterate until null terminator is found
@@ -76,7 +104,14 @@ void registerMachine() {
   http.begin(wifiClient, URL);
   http.POST(json);
   String payload = http.getString();
-  Serial.print("Answer Received: ");
+  // Check if payload contains "success"
+  if (payload.indexOf("opgeslagen") != -1) {
+    ledFeedback(true);
+    Serial.println("Registratie opgeslagen, flash OK");
+  } else {
+    ledFeedback(false);
+    Serial.println("Registratie FOUT, flash not OK");
+  }
   Serial.println(payload);
   http.end();
 }
@@ -117,22 +152,6 @@ void handleResetEEPROM() {
   server.send(200, "text/plain", "EEPROM reset successful");
 }
 
-void ledFeedback() {
-  if (LEDState == "off") {
-    Serial.println("LED Flash initiated");
-    LEDState = "on";
-    digitalWrite(LED, LOW);
-    delay(15000);
-    digitalWrite(LED, HIGH);
-    LEDState = "off";
-  } else {
-    Serial.println("Button pressed - LED off");
-    LEDState = "off";
-    digitalWrite(LED, HIGH);
-    delay(15000);
-  }
-}
-
 void handleRebootDevice() {
   ESP.restart(); // Reboot the device
 }
@@ -144,6 +163,7 @@ void setup() {
 
   // Turn off LED
   digitalWrite(LED, HIGH);
+  ledFeedback(false);
 
   // Loading Wifi Setup from EEPROM
   EEPROM.begin(sizeof(struct settings));
@@ -198,7 +218,7 @@ void loop() {
   // If the button is pressed, toggle the LED state
   if (buttonState == HIGH) {
     registerMachine();
-    ledFeedback();
+    
 
     Serial.println("Button Pressed");
     delay(250);
