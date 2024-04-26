@@ -23,6 +23,8 @@ ESP8266WebServer server(80);
 // Setup Hardware peripherals
 #define BUTTON_PIN D5
 #define LED D8
+
+
 // Auxiliary variables to store the current output state
 String LEDState = "off";
 HTTPClient http;
@@ -68,8 +70,6 @@ bool isNullTerminated(const char* str) {
 void registerMachine() {
   // Function to register machine input
   String URL = String(memory.url);
-
-
 
   // Check if memory.url is null-terminated
   if (isNullTerminated(memory.url)) {
@@ -197,6 +197,8 @@ void setup() {
     Serial.println();
     Serial.print("Wifi connected, local IP: ");
     Serial.print(WiFi.localIP());
+    Serial.println();
+    Serial.print(WiFi.macAddress());
     Serial.println();
   }
 
