@@ -208,6 +208,7 @@ void setup() {
 
   server.on("/", handlePortal);
   server.on("/reset-eeprom", HTTP_POST, handleResetEEPROM);
+  server.on("/reboot-device", HTTP_POST, handleRebootDevice);
   server.begin();
 }
 
