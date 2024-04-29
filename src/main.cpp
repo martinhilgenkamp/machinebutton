@@ -197,7 +197,7 @@ void setup() {
       // Create the SoftAP SSID with the device's MAC address
       String softAPSSID = "Setup Portal-" + String(macStr);
 
-      WiFi.softAP("softAPSSID", "1234567890");
+      WiFi.softAP(softAPSSID, "1234567890");
       Serial.println();
       Serial.println("WiFi Failed, Switching to AP mode.");
       Serial.print("SSID: ");
