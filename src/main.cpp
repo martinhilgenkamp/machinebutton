@@ -109,13 +109,23 @@ void onTelnetConnectionAttempt(String ip) {
 
 void onTelnetInput(String str) {
   // checks for a certain command
-  if (str == "ping") {
-    telnet.println("> pong"); 
-    Serial.println("- Telnet: pong");
+  if (str == "info") {
+    telnet.print("Machine: ");
+    telnet.println(memory.machineId);
+    telnet.print("Wifi Naam: ");
+    telnet.println(WiFi.SSID());
+    telnet.print("IP Address: ");
+    telnet.println(WiFi.localIP());
+    telnet.printf("Wifi Stertke: %d dBm\n", WiFi.RSSI());
+    telnet.println();
+    telnet.print("API URL: ");
+    telnet.println(memory.url);
+    
   // disconnect the client
-  } else if (str == "bye") {
+  } else if (str == "exit") {
     telnet.println("> disconnecting you...");
     telnet.disconnectClient();
+  // do a full reboot of esp device.
   } else if (str == "reboot") {
     telnet.println("> Rebooting device...");
     delay(1000); // Vertraging om de reactie te verzenden
