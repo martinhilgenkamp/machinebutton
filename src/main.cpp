@@ -133,7 +133,7 @@ void onTelnetInput(String str) {
     delay(1000); // Vertraging om de reactie te verzenden
     ESP.restart(); // Herstart het apparaat
   }  else {
-    telnet.print("Unknown command: ")
+    telnet.print("Unknown command: ");
     telnet.println(str);
     telnet.println(" - Type exit to disconnect.");
     telnet.println(" - Type info to view machine info.");
