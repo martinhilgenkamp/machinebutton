@@ -86,7 +86,9 @@ void onTelnetConnect(String ip) {
   telnet.println("\nWelkom " + telnet.getIP());
   telnet.print("Je bent verbonden met Machine: ");
   telnet.println(memory.machineId);
-  telnet.println("(Use ^] + q  to disconnect.)");
+  telnet.println("Type exit to disconnect");
+  telnet.println("Type info to view machine info");
+  telnet.println("Type reboot to reboot the machine)");
 }
 
 void onTelnetDisconnect(String ip) {
@@ -110,15 +112,15 @@ void onTelnetConnectionAttempt(String ip) {
 void onTelnetInput(String str) {
   // checks for a certain command
   if (str == "info") {
-    telnet.print("Machine: ");
+    telnet.print(">Machine: ");
     telnet.println(memory.machineId);
-    telnet.print("Wifi Naam: ");
+    telnet.print(">Wifi Naam: ");
     telnet.println(WiFi.SSID());
-    telnet.print("IP Address: ");
+    telnet.print(">IP Address: ");
     telnet.println(WiFi.localIP());
-    telnet.printf("Wifi Stertke: %d dBm\n", WiFi.RSSI());
+    telnet.printf(">Wifi Stertke: %d dBm\n", WiFi.RSSI());
     telnet.println();
-    telnet.print("API URL: ");
+    telnet.print(">API URL: ");
     telnet.println(memory.url);
     
   // disconnect the client
