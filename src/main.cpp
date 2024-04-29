@@ -83,12 +83,12 @@ void onTelnetConnect(String ip) {
   Serial.print(ip);
   Serial.println(" connected");
   
-  telnet.println("\nWelkom " + telnet.getIP());
+  //telnet.println("\nWelkom " + telnet.getIP());
   telnet.print("Je bent verbonden met Machine: ");
   telnet.println(memory.machineId);
-  telnet.println("Type exit to disconnect");
-  telnet.println("Type info to view machine info");
-  telnet.println("Type reboot to reboot the machine)");
+  telnet.println("Type exit to disconnect.");
+  telnet.println("Type info to view machine info.");
+  telnet.println("Type reboot to reboot the machine.");
 }
 
 void onTelnetDisconnect(String ip) {
@@ -112,24 +112,24 @@ void onTelnetConnectionAttempt(String ip) {
 void onTelnetInput(String str) {
   // checks for a certain command
   if (str == "info") {
-    telnet.print(">Machine: ");
+    telnet.print("  Machine: ");
     telnet.println(memory.machineId);
-    telnet.print(">Wifi Naam: ");
+    telnet.print("  Wifi Naam: ");
     telnet.println(WiFi.SSID());
-    telnet.print(">IP Address: ");
+    telnet.print("  IP Address: ");
     telnet.println(WiFi.localIP());
-    telnet.printf(">Wifi Stertke: %d dBm\n", WiFi.RSSI());
+    telnet.printf("  Wifi Stertke: %d dBm\n", WiFi.RSSI());
     telnet.println();
-    telnet.print(">API URL: ");
+    telnet.print("  API URL: ");
     telnet.println(memory.url);
     
   // disconnect the client
   } else if (str == "exit") {
-    telnet.println("> disconnecting you...");
+    telnet.println("   disconnecting you...");
     telnet.disconnectClient();
   // do a full reboot of esp device.
   } else if (str == "reboot") {
-    telnet.println("> Rebooting device...");
+    telnet.println("   Rebooting device...");
     delay(1000); // Vertraging om de reactie te verzenden
     ESP.restart(); // Herstart het apparaat
   }  else {
@@ -171,11 +171,11 @@ void registerMachine() {
       Serial.print("Destination URL: ");
       Serial.print(URL);
       // Telnet Feedback
-      telnet.print("Destination URL: ");
+      telnet.print("  Destination URL: ");
       telnet.println(URL);
     } else {
       Serial.println("Error - URL does not contain 'http'");
-      telnet.println("Error - URL does not contain 'http'");
+      telnet.println("  Error - URL does not contain 'http'");
       ledFeedback(false);
       return; // Exit function early on error
     }
@@ -208,7 +208,7 @@ void registerMachine() {
     ledFeedback(false);
   }
   Serial.println(payload);
-  telnet.print("Respones: ");
+  telnet.print("  Respone: ");
   telnet.println(payload);
   http.end();
 }
