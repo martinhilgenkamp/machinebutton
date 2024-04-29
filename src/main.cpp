@@ -166,7 +166,6 @@ void setup() {
 
   // Turn off LED
   digitalWrite(LED, HIGH);
-  ledFeedback(false);
 
   // Loading Wifi Setup from EEPROM
   EEPROM.begin(sizeof(struct settings));
@@ -198,9 +197,11 @@ void setup() {
       // Create the SoftAP SSID with the device's MAC address
       String softAPSSID = "Setup Portal-" + String(macStr);
 
-      WiFi.softAP("Setup Portal", "1234567890");
+      WiFi.softAP("softAPSSID", "1234567890");
       Serial.println();
       Serial.println("WiFi Failed, Switching to AP mode.");
+      Serial.print("SSID: ");
+      Serial.println(softAPSSID);
       Serial.print("AP IP address: ");
       Serial.println(WiFi.softAPIP());
       break;
