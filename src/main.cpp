@@ -31,12 +31,13 @@ HTTPClient http;
 WiFiClient wifiClient;
 
 void ledFeedback(bool success) {
-  Serial.println("LED Flash initiated");
+  //Serial.println("LED Flash initiated");
   unsigned long startTime = millis(); // Get the current time
 
   // Blink the LED for 5 seconds
   while (millis() - startTime < 5000) { // Run for 5000ms (5 seconds)
     if (success) {
+       Serial.println("Registratie opgeslagen, flash SUCCESS");
       // Blink the LED quickly twice for success
       for (int i = 0; i < 2; i++) {
         digitalWrite(LED, HIGH);
@@ -46,6 +47,7 @@ void ledFeedback(bool success) {
       }
     } else {
       // Blink the LED slowly five times for failure
+      Serial.println("Registratie opgeslagen, flash FAILED");
       for (int i = 0; i < 5; i++) {
         digitalWrite(LED, HIGH);
         delay(500);
@@ -78,6 +80,7 @@ void registerMachine() {
       Serial.println("URL contains 'http'");
     } else {
       Serial.println("URL does not contain 'http'");
+      ledFeedback(false);
       return; // Exit function early on error
     }
     Serial.println();
@@ -107,10 +110,8 @@ void registerMachine() {
   // Check if payload contains "success"
   if (payload.indexOf("opgeslagen") != -1) {
     ledFeedback(true);
-    Serial.println("Registratie opgeslagen, flash OK");
   } else {
     ledFeedback(false);
-    Serial.println("Registratie FOUT, flash not OK");
   }
   Serial.println(payload);
   http.end();
@@ -135,7 +136,7 @@ void handlePortal() {
     EEPROM.put(0, memory);
     EEPROM.commit();
 
-    server.send(200, "text/html", "<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'><title>Machine Setup</title><style>*,::after,::before{box-sizing:border-box;}body{margin:0;font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans','Liberation Sans';font-size:1rem;font-weight:400;line-height:1.5;color:#212529;background-color:#f5f5f5;}.form-control{display:block;width:100%;height:calc(1.5em + .75rem + 2px);border:1px solid #ced4da;}button{border:1px solid transparent;color:#fff;background-color:#007bff;border-color:#007bff;padding:.5rem 1rem;font-size:1.25rem;line-height:1.5;border-radius:.3rem;width:100%}.form-signin{width:100%;max-width:400px;padding:15px;margin:auto;}h1,p{text-align: center}</style> </head> <body><main class='form-signin'> <h1>Machine Setup</h1> <br/> <p>Your settings have been saved successfully!<br />Please restart the device.</p></main></body></html>");
+    server.send(200, "text/html", "<!doctype html> <html lang='en'> <head> <meta charset='utf-8'> <meta name='viewport' content='width=device-width, initial-scale=1'> <title>Machine Setup</title> <style> *, ::after, ::before { box-sizing: border-box; } body { margin: 0; font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans'; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #212529; background-color: #f5f5f5; } .form-control { display: block; width: 100%; height: calc(1.5em + .75rem + 2px); border: 1px solid #ced4da; } button { border: 1px solid transparent; color: #fff; background-color: #007bff; border-color: #007bff; padding: .5rem 1rem; font-size: 1.25rem; line-height: 1.5; border-radius: .3rem; width: 100% } .form-signin { width: 100%; max-width: 400px; padding: 15px; margin: auto; } h1, p { text-align: center } </style> </head> <body> <main class='form-signin'> <h1>Machine Setup</h1> <br /> <p>Your settings have been saved successfully!<br />Please restart the device.</p> <button type='button' onclick='rebootDevice()'>Reboot</button> </main> <script>function rebootDevice() { if (confirm('Are you sure you want to reboot the device?')) { fetch('/reboot-device', { method: 'POST' }).then(response => { if (!response.ok) { console.error('Error rebooting device'); } else { alert('Device rebooted successfully'); } }); } }</script> </body> </html>");
   } else {
     // Display setup form
     String formHtml = "<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'><title>Machine Setup</title><style>*,::after,::before{box-sizing:border-box;}body{margin:0;font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans','Liberation Sans';font-size:1rem;font-weight:400;line-height:1.5;color:#212529;background-color:#f5f5f5;}.form-control{display:block;width:100%;height:calc(1.5em + .75rem + 2px);border:1px solid #ced4da;}button{cursor: pointer;border:1px solid transparent;color:#fff;background-color:#007bff;border-color:#007bff;padding:.5rem 1rem;font-size:1.25rem;line-height:1.5;border-radius:.3rem;width:100%}.form-signin{width:100%;max-width:400px;padding:15px;margin:auto;}h1{text-align: center}</style> </head> <body><main class='form-signin'> <form action='/' method='post'> <h1 class=''>Machine Setup</h1><br/><div class='form-floating'><label>SSID</label><input type='text' class='form-control' name='ssid' value='" + String(memory.ssid) + "' > </div><div class='form-floating'><br/><label>Password</label><input type='password' class='form-control' name='password' value='" + String(memory.password) + "'></div><div class='form-floating'><br/><label>URL</label><input type='text' class='form-control' name='url' value='" + String(memory.url) + "'></div><br/><br/><div class='form-floating'><br/><label>Machine ID</label><input type='number' class='form-control' name='machineId' value='" + String(memory.machineId) + "'></div><br/><br/><button type='submit'>Save</button><br/><br/><button type='button' onclick='resetEEPROM()'>Reset</button><br/><br/><button type='button' onclick='rebootDevice()'>Reboot</button><p style='text-align: right'><a href='https://pruim.nl' style='color: #32C5FF'>Pruim Automatisering</a></p></form></main> <script>function resetEEPROM() { if (confirm('Are you sure you want to reset to factory defaults? This action cannot be undone.')) { fetch('/reset-eeprom', { method: 'POST' }).then(response => { if (!response.ok) { console.error('Error resetting EEPROM'); } else { alert('EEPROM reset successful'); location.reload(); } }); } } function rebootDevice() { if (confirm('Are you sure you want to reboot the device?')) { fetch('/reboot-device', { method: 'POST' }).then(response => { if (!response.ok) { console.error('Error rebooting device'); } else { alert('Device rebooted successfully'); } }); } }</script> </body></html>";
@@ -153,7 +154,9 @@ void handleResetEEPROM() {
 }
 
 void handleRebootDevice() {
-  ESP.restart(); // Reboot the device
+  server.send(200, "text/plain", "Rebooting device...");
+  delay(1000); // Delay to allow response to be sent
+  ESP.restart(); // Reboot the Device
 }
 
 void setup() {
@@ -184,6 +187,17 @@ void setup() {
     Serial.print(".");
     if (tries++ > 30) {
       WiFi.mode(WIFI_AP);
+      // Get the MAC address of the device
+      uint8_t mac[6];
+      WiFi.macAddress(mac);
+
+      // Convert the MAC address to a string
+      char macStr[18];
+      sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+
+      // Create the SoftAP SSID with the device's MAC address
+      String softAPSSID = "Setup Portal-" + String(macStr);
+
       WiFi.softAP("Setup Portal", "1234567890");
       Serial.println();
       Serial.println("WiFi Failed, Switching to AP mode.");
@@ -221,8 +235,6 @@ void loop() {
   // If the button is pressed, toggle the LED state
   if (buttonState == HIGH) {
     registerMachine();
-    
-
     Serial.println("Button Pressed");
     delay(250);
   }
