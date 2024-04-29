@@ -9,13 +9,14 @@
 #include <HTTPClient.h>
 #include <EEPROM.h>
 #include <ESPTelnet.h>
+#include <ArduinoOTA.h>
 
 // Setup storage
 struct settings {
   char ssid[30];
   char password[30];
   char url[256];
-  int machineId; // Add machine ID field
+  unsigned int machineId; // Add machine ID field
 } memory = {};
 
 // Setup Server for Wifi Page
@@ -48,7 +49,7 @@ void ledFeedback(bool success) {
     if (success) {
        
       // Blink the LED quickly twice for success
-      for (int i = 0; i < 2; i++) {
+      for (unsigned int i = 0; i < 2; i++) {
         digitalWrite(LED, HIGH);
         delay(100);
         digitalWrite(LED, LOW);
@@ -57,7 +58,7 @@ void ledFeedback(bool success) {
     } else {
       // Blink the LED slowly five times for failure
       
-      for (int i = 0; i < 5; i++) {
+      for (unsigned int i = 0; i < 5; i++) {
         digitalWrite(LED, HIGH);
         delay(500);
         digitalWrite(LED, LOW);
@@ -138,7 +139,6 @@ void onTelnetInput(String str) {
     telnet.println(" - Type exit to disconnect.");
     telnet.println(" - Type info to view machine info.");
     telnet.println(" - Type reboot to reboot the machine.");
-}
   }
 }
 
@@ -265,6 +265,12 @@ void setup() {
   Serial.begin(115200);
   Serial.println("Systeem wordt opgestart.");
 
+  // Setup OTA
+  ArduinoOTA.setHostname("ESP32");
+  ArduinoOTA.begin();
+  Serial.println("OTA Initialized");
+
+
   // Turn off LED
   digitalWrite(LED, HIGH);
 
@@ -336,6 +342,9 @@ void setup() {
 }
 
 void loop() {
+  // Handle OTA updates
+  ArduinoOTA.handle();
+
   server.handleClient();
 
   // Check the physical button state
