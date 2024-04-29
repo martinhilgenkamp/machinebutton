@@ -37,7 +37,7 @@ void ledFeedback(bool success) {
   // Blink the LED for 5 seconds
   while (millis() - startTime < 5000) { // Run for 5000ms (5 seconds)
     if (success) {
-       Serial.println("Registratie opgeslagen, flash SUCCESS");
+       Serial.println("Flash SUCCESS");
       // Blink the LED quickly twice for success
       for (int i = 0; i < 2; i++) {
         digitalWrite(LED, HIGH);
@@ -47,7 +47,7 @@ void ledFeedback(bool success) {
       }
     } else {
       // Blink the LED slowly five times for failure
-      Serial.println("Registratie opgeslagen, flash FAILED");
+      Serial.println("Flash FAILED");
       for (int i = 0; i < 5; i++) {
         digitalWrite(LED, HIGH);
         delay(500);
