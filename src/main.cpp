@@ -86,9 +86,9 @@ void onTelnetConnect(String ip) {
   //telnet.println("\nWelkom " + telnet.getIP());
   telnet.print("Je bent verbonden met Machine: ");
   telnet.println(memory.machineId);
-  telnet.println("Type exit to disconnect.");
-  telnet.println("Type info to view machine info.");
-  telnet.println("Type reboot to reboot the machine.");
+  telnet.println(" - Type exit to disconnect.");
+  telnet.println(" - Type info to view machine info.");
+  telnet.println(" - Type reboot to reboot the machine.");
 }
 
 void onTelnetDisconnect(String ip) {
@@ -133,7 +133,12 @@ void onTelnetInput(String str) {
     delay(1000); // Vertraging om de reactie te verzenden
     ESP.restart(); // Herstart het apparaat
   }  else {
+    telnet.print("Unknown command: ")
     telnet.println(str);
+    telnet.println(" - Type exit to disconnect.");
+    telnet.println(" - Type info to view machine info.");
+    telnet.println(" - Type reboot to reboot the machine.");
+}
   }
 }
 
