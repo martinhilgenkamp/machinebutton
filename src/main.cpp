@@ -8,6 +8,7 @@
 #include <ESP8266mDNS.h>
 #include <HTTPClient.h>
 #include <EEPROM.h>
+#include <ESPTelnet.h>
 
 // Setup storage
 struct settings {
@@ -19,6 +20,9 @@ struct settings {
 
 // Setup Server for Wifi Page
 ESP8266WebServer server(80);
+ESPTelnet telnet;
+IPAddress ip;
+uint16_t  port = 23;
 
 // Setup Hardware peripherals
 #define BUTTON_PIN D5
@@ -31,13 +35,18 @@ HTTPClient http;
 WiFiClient wifiClient;
 
 void ledFeedback(bool success) {
-  //Serial.println("LED Flash initiated");
   unsigned long startTime = millis(); // Get the current time
+
+  if (success) {
+    Serial.println("Flash SUCCESS");
+  } else {
+    Serial.println("Flash FAILED");
+  }
 
   // Blink the LED for 5 seconds
   while (millis() - startTime < 5000) { // Run for 5000ms (5 seconds)
     if (success) {
-       Serial.println("Flash SUCCESS");
+       
       // Blink the LED quickly twice for success
       for (int i = 0; i < 2; i++) {
         digitalWrite(LED, HIGH);
@@ -47,7 +56,7 @@ void ledFeedback(bool success) {
       }
     } else {
       // Blink the LED slowly five times for failure
-      Serial.println("Flash FAILED");
+      
       for (int i = 0; i < 5; i++) {
         digitalWrite(LED, HIGH);
         delay(500);
@@ -64,10 +73,74 @@ bool isNullTerminated(const char* str) {
     for (int i = 0; str[i] != '\0'; i++) {
         // Iterate until null terminator is found
     }
-
     // If the loop reached here, it means a null terminator was found
     return true;
 }
+/* ------------------------------------------------- */
+// (optional) callback functions for telnet events
+void onTelnetConnect(String ip) {
+  Serial.print("- Telnet: ");
+  Serial.print(ip);
+  Serial.println(" connected");
+  
+  telnet.println("\nWelkom " + telnet.getIP());
+  telnet.print("Je bent verbonden met Machine: ");
+  telnet.println(memory.machineId);
+  telnet.println("(Use ^] + q  to disconnect.)");
+}
+
+void onTelnetDisconnect(String ip) {
+  Serial.print("- Telnet: ");
+  Serial.print(ip);
+  Serial.println(" disconnected");
+}
+
+void onTelnetReconnect(String ip) {
+  Serial.print("- Telnet: ");
+  Serial.print(ip);
+  Serial.println(" reconnected");
+}
+
+void onTelnetConnectionAttempt(String ip) {
+  Serial.print("- Telnet: ");
+  Serial.print(ip);
+  Serial.println(" tried to connected");
+}
+
+void onTelnetInput(String str) {
+  // checks for a certain command
+  if (str == "ping") {
+    telnet.println("> pong"); 
+    Serial.println("- Telnet: pong");
+  // disconnect the client
+  } else if (str == "bye") {
+    telnet.println("> disconnecting you...");
+    telnet.disconnectClient();
+  } else {
+    telnet.println(str);
+  }
+}
+
+void setupTelnet() {  
+  // passing on functions for various telnet events
+  telnet.onConnect(onTelnetConnect);
+  telnet.onConnectionAttempt(onTelnetConnectionAttempt);
+  telnet.onReconnect(onTelnetReconnect);
+  telnet.onDisconnect(onTelnetDisconnect);
+  telnet.onInputReceived(onTelnetInput);
+
+  Serial.print("- Telnet: ");
+  if (telnet.begin(port)) {
+    Serial.print("Telnet running on: ");
+    Serial.print(ip);
+    Serial.print(":");
+    Serial.print(port);
+  } else {
+    Serial.println("Telnet - Error.");
+  }
+}
+
+/* ------------------------------------------------- */
 
 void registerMachine() {
   // Function to register machine input
@@ -77,15 +150,20 @@ void registerMachine() {
   if (isNullTerminated(memory.url)) {
     // Check if the URL contains "http"
     if (URL.indexOf("http") != -1) {
-      Serial.println("URL contains 'http'");
+      //Serial Feedback
+      Serial.println();
+      Serial.print("Destination URL: ");
+      Serial.print(URL);
+      // Telnet Feedback
+      telnet.print("Destination URL: ");
+      telnet.println(URL);
     } else {
-      Serial.println("URL does not contain 'http'");
+      Serial.println("Error - URL does not contain 'http'");
+      telnet.println("Error - URL does not contain 'http'");
       ledFeedback(false);
       return; // Exit function early on error
     }
-    Serial.println();
-    Serial.print("Destination URL: ");
-    Serial.print(URL);
+    
   } else {
     Serial.println("Error: The URL in EEPROM is not null-terminated.");
     return; // Exit function early on error
@@ -114,6 +192,8 @@ void registerMachine() {
     ledFeedback(false);
   }
   Serial.println(payload);
+  telnet.print("Respones: ");
+  telnet.println(payload);
   http.end();
 }
 
@@ -204,6 +284,7 @@ void setup() {
       Serial.println(softAPSSID);
       Serial.print("AP IP address: ");
       Serial.println(WiFi.softAPIP());
+      ip = WiFi.softAPIP();
       break;
     }
   }
@@ -211,16 +292,22 @@ void setup() {
   if (WiFi.getMode() == WIFI_STA) {
     Serial.println();
     Serial.print("Wifi connected, local IP: ");
-    Serial.print(WiFi.localIP());
+    ip = WiFi.localIP();
+    Serial.print(ip);
     Serial.println();
     Serial.print(WiFi.macAddress());
     Serial.println();
+    
   }
 
   // Define Pinmodes.
   pinMode(LED, OUTPUT);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 
+  // Create Telnet server
+   setupTelnet();
+
+  // Create webserver handles
   server.on("/", handlePortal);
   server.on("/reset-eeprom", HTTP_POST, handleResetEEPROM);
   server.on("/reboot-device", HTTP_POST, handleRebootDevice);
@@ -232,13 +319,21 @@ void loop() {
 
   // Check the physical button state
   int buttonState = digitalRead(BUTTON_PIN);
+  
+  telnet.loop();
+
+  // send serial input to telnet as output
+  if (Serial.available()) {
+    telnet.print('Hallo wereld.');
+  }
 
   // If the button is pressed, toggle the LED state
   if (buttonState == HIGH) {
-    registerMachine();
+    telnet.println("Button Pressed");
     Serial.println("Button Pressed");
-    delay(250);
+    registerMachine(); 
   }
-  Serial.print(".");
-  delay(100);
+
+  //Serial.print(".");
+  //delay(100);
 }
