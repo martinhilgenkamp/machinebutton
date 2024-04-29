@@ -116,7 +116,11 @@ void onTelnetInput(String str) {
   } else if (str == "bye") {
     telnet.println("> disconnecting you...");
     telnet.disconnectClient();
-  } else {
+  } else if (str == "reboot") {
+    telnet.println("> Rebooting device...");
+    delay(1000); // Vertraging om de reactie te verzenden
+    ESP.restart(); // Herstart het apparaat
+  }  else {
     telnet.println(str);
   }
 }
