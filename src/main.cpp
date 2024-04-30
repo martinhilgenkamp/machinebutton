@@ -11,6 +11,9 @@
 #include <ESPTelnet.h>
 #include <ArduinoOTA.h>
 
+//Version number
+#define SOFTWARE_VERSION "1.0.0"
+
 // Globale variabelen voor de knop
 unsigned long firstPressTime = 0;
 int pressCount = 0;
@@ -121,6 +124,7 @@ void onTelnetConnect(String ip) {
   
   //telnet.println("\nWelkom " + telnet.getIP());
   telnet.print("Je bent verbonden met Machine: ");
+  telnet.println("Versie: " + String(SOFTWARE_VERSION));
   telnet.println(memory.machineId);
   telnet.println(" - Type exit to disconnect.");
   telnet.println(" - Type info to view machine info.");
@@ -152,6 +156,7 @@ void onTelnetInput(String str) {
   if (str == "info") {
     telnet.print("  Machine: ");
     telnet.println(memory.machineId);
+    telnet.println("Versie: " + String(SOFTWARE_VERSION));
     telnet.print("  Wifi Naam: ");
     telnet.println(WiFi.SSID());
     telnet.print("  IP Address: ");
@@ -284,10 +289,11 @@ void handlePortal() {
 
     server.send(200, "text/html", "<!doctype html> <html lang='en'> <head> <meta charset='utf-8'> <meta name='viewport' content='width=device-width, initial-scale=1'> <title>Machine Setup</title> <style> *, ::after, ::before { box-sizing: border-box; } body { margin: 0; font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans'; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #212529; background-color: #f5f5f5; } .form-control { display: block; width: 100%; height: calc(1.5em + .75rem + 2px); border: 1px solid #ced4da; } button { border: 1px solid transparent; color: #fff; background-color: #007bff; border-color: #007bff; padding: .5rem 1rem; font-size: 1.25rem; line-height: 1.5; border-radius: .3rem; width: 100% } .form-signin { width: 100%; max-width: 400px; padding: 15px; margin: auto; } h1, p { text-align: center } </style> </head> <body> <main class='form-signin'> <h1>Machine Setup</h1> <br /> <p>Your settings have been saved successfully!<br />Please restart the device.</p> <button type='button' onclick='rebootDevice()'>Reboot</button> </main> <script>function rebootDevice() { if (confirm('Are you sure you want to reboot the device?')) { fetch('/reboot-device', { method: 'POST' }).then(response => { if (!response.ok) { console.error('Error rebooting device'); } else { alert('Device rebooted successfully'); } }); } }</script> </body> </html>");
   } else {
-    // Display setup form
-    String formHtml = "<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'><title>Machine Setup</title><style>*,::after,::before{box-sizing:border-box;}body{margin:0;font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans','Liberation Sans';font-size:1rem;font-weight:400;line-height:1.5;color:#212529;background-color:#f5f5f5;}.form-control{display:block;width:100%;height:calc(1.5em + .75rem + 2px);border:1px solid #ced4da;}button{cursor: pointer;border:1px solid transparent;color:#fff;background-color:#007bff;border-color:#007bff;padding:.5rem 1rem;font-size:1.25rem;line-height:1.5;border-radius:.3rem;width:100%}.form-signin{width:100%;max-width:400px;padding:15px;margin:auto;}h1{text-align: center}</style> </head> <body><main class='form-signin'> <form action='/' method='post'> <h1 class=''>Machine Setup</h1><br/><div class='form-floating'><label>SSID</label><input type='text' class='form-control' name='ssid' value='" + String(memory.ssid) + "' > </div><div class='form-floating'><br/><label>Password</label><input type='password' class='form-control' name='password' value='" + String(memory.password) + "'></div><div class='form-floating'><br/><label>URL</label><input type='text' class='form-control' name='url' value='" + String(memory.url) + "'></div><br/><br/><div class='form-floating'><br/><label>Machine ID</label><input type='number' class='form-control' name='machineId' value='" + String(memory.machineId) + "'></div><br/><br/><button type='submit'>Save</button><br/><br/><button type='button' onclick='resetEEPROM()'>Reset</button><br/><br/><button type='button' onclick='rebootDevice()'>Reboot</button><p style='text-align: right'><a href='https://pruim.nl' style='color: #32C5FF'>Pruim Automatisering</a></p></form></main> <script>function resetEEPROM() { if (confirm('Are you sure you want to reset to factory defaults? This action cannot be undone.')) { fetch('/reset-eeprom', { method: 'POST' }).then(response => { if (!response.ok) { console.error('Error resetting EEPROM'); } else { alert('EEPROM reset successful'); location.reload(); } }); } } function rebootDevice() { if (confirm('Are you sure you want to reboot the device?')) { fetch('/reboot-device', { method: 'POST' }).then(response => { if (!response.ok) { console.error('Error rebooting device'); } else { alert('Device rebooted successfully'); } }); } }</script> </body></html>";
+    // Display setup form with version information
+    String formHtml = "<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'><title>Machine Setup</title><style>*,::after,::before{box-sizing:border-box;}body{margin:0;font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans','Liberation Sans';font-size:1rem;font-weight:400;line-height:1.5;color:#212529;background-color:#f5f5f5;}.form-control{display:block;width:100%;height:calc(1.5em + .75rem + 2px);border:1px solid #ced4da;}button{cursor: pointer;border:1px solid transparent;color:#fff;background-color:#007bff;border-color:#007bff;padding:.5rem 1rem;font-size:1.25rem;line-height:1.5;border-radius:.3rem;width:100%}.form-signin{width:100%;max-width:400px;padding:15px;margin:auto;}h1{text-align: center}</style> </head> <body><main class='form-signin'> <form action='/' method='post'> <h1 class=''>Machine Setup</h1><br/><div class='form-floating'><label>SSID</label><input type='text' class='form-control' name='ssid' value='" + String(memory.ssid) + "' > </div><div class='form-floating'><br/><label>Password</label><input type='password' class='form-control' name='password' value='" + String(memory.password) + "'></div><div class='form-floating'><br/><label>URL</label><input type='text' class='form-control' name='url' value='" + String(memory.url) + "'></div><br/><br/><div class='form-floating'><br/><label>Machine ID</label><input type='number' class='form-control' name='machineId' value='" + String(memory.machineId) + "'></div><br/><br/><button type='submit'>Save</button><br/><br/><button type='button' onclick='resetEEPROM()'>Reset</button><br/><br/><button type='button' onclick='rebootDevice()'>Reboot</button><p style='text-align: center'>Versie: " + String(SOFTWARE_VERSION) + "</p><p style='text-align: right'><a href='https://pruim.nl' style='color: #32C5FF'>Pruim IT</a></p></form></main> <script>function resetEEPROM() { if (confirm('Are you sure you want to reset to factory defaults? This action cannot be undone.')) { fetch('/reset-eeprom', { method: 'POST' }).then(response => { if (!response.ok) { console.error('Error resetting EEPROM'); } else { alert('EEPROM reset successful'); location.reload(); } }); } } function rebootDevice() { if (confirm('Are you sure you want to reboot the device?')) { fetch('/reboot-device', { method: 'POST' }).then(response => { if (!response.ok) { console.error('Error rebooting device'); } else { alert('Device rebooted successfully'); } }); } }</script> </body></html>";
     server.send(200, "text/html", formHtml);
   }
+
 }
 
 void handleResetEEPROM() {
