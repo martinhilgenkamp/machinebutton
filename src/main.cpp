@@ -11,6 +11,12 @@
 #include <ESPTelnet.h>
 #include <ArduinoOTA.h>
 
+// Globale variabelen voor de knop
+unsigned long firstPressTime = 0;
+int pressCount = 0;
+const int pressThreshold = 5;
+const unsigned long timeThreshold = 3000;  // 3000 milliseconden = 3 seconden
+
 // Setup storage
 struct settings {
   char ssid[30];
@@ -77,6 +83,35 @@ bool isNullTerminated(const char* str) {
     // If the loop reached here, it means a null terminator was found
     return true;
 }
+//LED knipperen op Flash commando - Koen
+void flashLED(int duration, int blinkRate) {
+  bool initialLEDState = digitalRead(LED);  // Opslaan van de huidige LED-status
+
+  unsigned long startTime = millis();
+  while (millis() - startTime < duration) {
+    digitalWrite(LED, !initialLEDState);  // Zet de LED aan/uit tegenovergesteld van de beginstand
+    delay(blinkRate);
+    digitalWrite(LED, initialLEDState);  // Zet de LED terug naar de beginstand
+    delay(blinkRate);
+  }
+
+  digitalWrite(LED, initialLEDState);  // Herstel de originele LED-status na het knipperen
+}
+
+//Define a function to calculate uptime: - Koen
+String formatUptime() {
+  unsigned long seconds = millis() / 1000;
+  unsigned long days = seconds / 86400;
+  seconds %= 86400;
+  unsigned long hours = seconds / 3600;
+  seconds %= 3600;
+  unsigned long minutes = seconds / 60;
+  seconds %= 60;
+  
+  String uptime = String(days) + "d " + String(hours) + "h " + String(minutes) + "m " + String(seconds) + "s";
+  return uptime;
+}
+
 /* ------------------------------------------------- */
 // (optional) callback functions for telnet events
 void onTelnetConnect(String ip) {
@@ -90,6 +125,8 @@ void onTelnetConnect(String ip) {
   telnet.println(" - Type exit to disconnect.");
   telnet.println(" - Type info to view machine info.");
   telnet.println(" - Type reboot to reboot the machine.");
+  telnet.println(" - Type uptime to view device uptime.");
+  telnet.println(" - Type flash to flash the LED.");
 }
 
 void onTelnetDisconnect(String ip) {
@@ -133,12 +170,20 @@ void onTelnetInput(String str) {
     telnet.println("   Rebooting device...");
     delay(1000); // Vertraging om de reactie te verzenden
     ESP.restart(); // Herstart het apparaat
+  } else if (str == "uptime") {
+    String uptime = formatUptime();
+    telnet.println("Device Uptime: " + uptime);
+  } else if (str == "flash") {
+    telnet.println("Flashing LED for 15 seconds...");
+    flashLED(15000, 50);  // Flash LED for 15 seconds with a blink rate of 500ms
   }  else {
     telnet.print("Unknown command: ");
     telnet.println(str);
     telnet.println(" - Type exit to disconnect.");
     telnet.println(" - Type info to view machine info.");
     telnet.println(" - Type reboot to reboot the machine.");
+    telnet.println(" - Type uptime to view device uptime.");
+    telnet.println(" - Type flash to flash the LED.");
   }
 }
 
