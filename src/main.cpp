@@ -11,8 +11,9 @@
 #include <ESPTelnet.h>
 #include <ArduinoOTA.h>
 
+
 //Version number
-#define SOFTWARE_VERSION "1.0.2"
+#define SOFTWARE_VERSION "1.0.3"
 
 // Globale variabelen voor de knop
 unsigned long firstPressTime = 0;
