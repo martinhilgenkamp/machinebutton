@@ -324,22 +324,24 @@ void handleRebootDevice() {
 }
 
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(115200);
   Serial.println("Systeem wordt opgestart.");
-
-  // Setup OTA
-  ArduinoOTA.setHostname("ESP32");
-  ArduinoOTA.begin();
-  Serial.println("OTA Initialized");
-
-
-  // Turn off LED
-  digitalWrite(LED, HIGH);
 
   // Loading Wifi Setup from EEPROM
   EEPROM.begin(sizeof(struct settings));
   EEPROM.get(0, memory);
+
+  // Turn off LED
+  digitalWrite(LED, HIGH);
+
+  // Format the hostname with the machine ID from EEPROM
+  String hostname = "ESP32_MACHINE_" + String(memory.machineId);
+
+  // Setup OTA with the new hostname
+  ArduinoOTA.setHostname(hostname.c_str());
+  ArduinoOTA.begin();
+  Serial.print("OTA Initialized with Hostname: ");
+  Serial.println(hostname);
 
   byte tries = 0;
 
@@ -348,26 +350,15 @@ void setup() {
 
   Serial.print("Connecting To: ");
   Serial.println(memory.ssid);
-
   Serial.print("Wifi wordt verbonden.");
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
     Serial.print(".");
     if (tries++ > 30) {
-      WiFi.mode(WIFI_AP);
-      // Get the MAC address of the device
-      uint8_t mac[6];
-      WiFi.macAddress(mac);
+      String softAPSSID = "Setup Portal-" + hostname;  // Using hostname for AP SSID for consistency
 
-      // Convert the MAC address to a string
-      char macStr[18];
-      sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-
-      // Create the SoftAP SSID with the device's MAC address
-      String softAPSSID = "Setup Portal-" + String(macStr);
-
-      WiFi.softAP(softAPSSID, "1234567890");
+      WiFi.softAP(softAPSSID.c_str(), "1234567890");
       Serial.println();
       Serial.println("WiFi Failed, Switching to AP mode.");
       Serial.print("SSID: ");
@@ -387,7 +378,6 @@ void setup() {
     Serial.println();
     Serial.print(WiFi.macAddress());
     Serial.println();
-    
   }
 
   // Define Pinmodes.
@@ -395,7 +385,7 @@ void setup() {
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 
   // Create Telnet server
-   setupTelnet();
+  setupTelnet();
 
   // Create webserver handles
   server.on("/", handlePortal);
