@@ -12,7 +12,7 @@
 #include <ArduinoOTA.h>
 
 //Version number
-#define SOFTWARE_VERSION "1.0.1"
+#define SOFTWARE_VERSION "1.0.2"
 
 // Globale variabelen voor de knop
 unsigned long firstPressTime = 0;
@@ -140,7 +140,7 @@ void onTelnetConnect(String ip) {
   telnet.println(" - Type info to view machine info.");
   telnet.println(" - Type reboot to reboot the machine.");
   telnet.println(" - Type uptime to view device uptime.");
-  telnet.println(" - Type flash to flash the LED.");
+  telnet.println(" - Type LED to flash the LED.");
 }
 
 void onTelnetDisconnect(String ip) {
@@ -189,7 +189,7 @@ void onTelnetInput(String str) {
   } else if (str == "uptime") {
     String uptime = formatUptime();
     telnet.println("Device Uptime: " + uptime);
-  } else if (str == "flash") {
+  } else if (str == "LED","led") {
     telnet.println("Flashing LED for 15 seconds...");
     flashLED(15000, 50);  // Flash LED for 15 seconds with a blink rate of 500ms
   }  else {
@@ -199,7 +199,7 @@ void onTelnetInput(String str) {
     telnet.println(" - Type info to view machine info.");
     telnet.println(" - Type reboot to reboot the machine.");
     telnet.println(" - Type uptime to view device uptime.");
-    telnet.println(" - Type flash to flash the LED.");
+    telnet.println(" - Type LED to flash the LED.");
   }
 }
 
