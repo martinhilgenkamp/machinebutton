@@ -13,7 +13,7 @@
 
 
 //Version number
-#define SOFTWARE_VERSION "1.0.3"
+#define SOFTWARE_VERSION "1.0.4"
 
 // Globale variabelen voor de knop
 unsigned long firstPressTime = 0;
@@ -325,6 +325,7 @@ void handleRebootDevice() {
 }
 
 void setup() {
+  // put your setup code here, to run once:
   Serial.begin(115200);
   Serial.println("Systeem wordt opgestart.");
 
@@ -335,8 +336,8 @@ void setup() {
   // Turn off LED
   digitalWrite(LED, HIGH);
 
-  // Format the hostname with the machine ID from EEPROM
-  String hostname = "ESP32_MACHINE_" + String(memory.machineId);
+  // Format the new hostname using version number and machine ID
+  String hostname = "ESP_V" + String(SOFTWARE_VERSION) + "_MACHINE" + String(memory.machineId);
 
   // Setup OTA with the new hostname
   ArduinoOTA.setHostname(hostname.c_str());
@@ -357,7 +358,7 @@ void setup() {
     delay(1000);
     Serial.print(".");
     if (tries++ > 30) {
-      String softAPSSID = "Setup Portal-" + hostname;  // Using hostname for AP SSID for consistency
+      String softAPSSID = "Setup Portal-V" + String(SOFTWARE_VERSION);
 
       WiFi.softAP(softAPSSID.c_str(), "1234567890");
       Serial.println();
@@ -394,6 +395,7 @@ void setup() {
   server.on("/reboot-device", HTTP_POST, handleRebootDevice);
   server.begin();
 }
+
 
 void loop() {
   // Handle OTA updates
