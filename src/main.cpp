@@ -167,14 +167,13 @@ void onTelnetInput(String str) {
   if (str == "info") {
     telnet.print("  Machine: ");
     telnet.println(memory.machineId);
-    telnet.println("Versie: " + String(SOFTWARE_VERSION));
-    telnet.println("MAC Adres: " + getMacAddress());
+    telnet.println("  Versie: " + String(SOFTWARE_VERSION));
+    telnet.println("  MAC Adres: " + getMacAddress());
     telnet.print("  Wifi Naam: ");
     telnet.println(WiFi.SSID());
     telnet.print("  IP Address: ");
     telnet.println(WiFi.localIP());
     telnet.printf("  Wifi Stertke: %d dBm\n", WiFi.RSSI());
-    telnet.println();
     telnet.print("  API URL: ");
     telnet.println(memory.url);
     
