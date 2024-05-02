@@ -13,7 +13,7 @@
 
 //test
 //Version number
-#define SOFTWARE_VERSION "1.0.5"
+#define SOFTWARE_VERSION "1.0.6"
 
 // Globale variabelen voor de knop
 unsigned long firstPressTime = 0;
