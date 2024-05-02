@@ -134,9 +134,9 @@ void onTelnetConnect(String ip) {
   
   //telnet.println("\nWelkom " + telnet.getIP());
   telnet.print("Je bent verbonden met Machine: ");
+  telnet.println(memory.machineId);
   telnet.println("Versie: " + String(SOFTWARE_VERSION));
   telnet.println("MAC Adres: " + getMacAddress());
-  telnet.println(memory.machineId);
   telnet.println(" - Type exit to disconnect.");
   telnet.println(" - Type info to view machine info.");
   telnet.println(" - Type reboot to reboot the machine.");
