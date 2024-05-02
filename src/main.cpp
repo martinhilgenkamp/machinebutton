@@ -13,7 +13,7 @@
 
 //test
 //Version number
-#define SOFTWARE_VERSION "1.0.4"
+#define SOFTWARE_VERSION "1.0.5"
 
 // Globale variabelen voor de knop
 unsigned long firstPressTime = 0;
@@ -163,7 +163,10 @@ void onTelnetConnectionAttempt(String ip) {
 }
 
 void onTelnetInput(String str) {
-  // checks for a certain command
+  // Converteer de invoer naar kleine letters voordat deze wordt verwerkt
+  std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+
+  // Controleer op specifieke commando's
   if (str == "info") {
     telnet.print("  Machine: ");
     telnet.println(memory.machineId);
@@ -174,15 +177,11 @@ void onTelnetInput(String str) {
     telnet.print("  IP Address: ");
     telnet.println(WiFi.localIP());
     telnet.printf("  Wifi Stertke: %d dBm\n", WiFi.RSSI());
-    telnet.println();
     telnet.print("  API URL: ");
     telnet.println(memory.url);
-    
-  // disconnect the client
   } else if (str == "exit") {
     telnet.println("   disconnecting you...");
     telnet.disconnectClient();
-  // do a full reboot of esp device.
   } else if (str == "reboot") {
     telnet.println("   Rebooting device...");
     delay(1000); // Vertraging om de reactie te verzenden
@@ -190,19 +189,20 @@ void onTelnetInput(String str) {
   } else if (str == "uptime") {
     String uptime = formatUptime();
     telnet.println("Device Uptime: " + uptime);
-  } else if (str == "LED","led") {
+  } else if (str == "led") {
     telnet.println("Flashing LED for 15 seconds...");
     flashLED(15000, 50);  // Flash LED for 15 seconds with a blink rate of 500ms
-  }  else {
+  } else {
     telnet.print("Unknown command: ");
     telnet.println(str);
     telnet.println(" - Type exit to disconnect.");
     telnet.println(" - Type info to view machine info.");
     telnet.println(" - Type reboot to reboot the machine.");
     telnet.println(" - Type uptime to view device uptime.");
-    telnet.println(" - Type LED to flash the LED.");
+    telnet.println(" - Type led to flash the LED.");
   }
 }
+
 
 void setupTelnet() {  
   // passing on functions for various telnet events
