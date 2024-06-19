@@ -11,9 +11,11 @@
 #include <ESPTelnet.h>
 #include <ArduinoOTA.h>
 
-//test
+const char* www_username = "pruim";
+const char* www_password = "0GyFCUO3IbZYKHYOgZLz26e7wLUtOTFB";
+
 //Version number
-#define SOFTWARE_VERSION "1.0.6"
+#define SOFTWARE_VERSION "1.0.7"
 
 // Globale variabelen voor de knop
 unsigned long firstPressTime = 0;
@@ -281,6 +283,12 @@ void registerMachine() {
 }
 
 void handlePortal() {
+  if (!server.authenticate(www_username, www_password)) {
+    // Als authenticatie faalt, stuur dan een authenticatie verzoek
+    server.requestAuthentication();
+    return;
+  }
+  
   if (server.method() == HTTP_POST) {
     // Parse form data and store in memory
     strncpy(memory.ssid, server.arg("ssid").c_str(), sizeof(memory.ssid));
@@ -305,8 +313,6 @@ void handlePortal() {
     String formHtml = "<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'><title>Machine Setup</title><style>*,::after,::before{box-sizing:border-box;}body{margin:0;font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans','Liberation Sans';font-size:1rem;font-weight:400;line-height:1.5;color:#212529;background-color:#f5f5f5;}.form-control{display:block;width:100%;height:calc(1.5em + .75rem + 2px);margin-bottom:10px;padding:0.375rem 0.75rem;border:1px solid #ced4da;border-radius:0.25rem;}button{cursor: pointer;border:1px solid transparent;color:#fff;background-color:#007bff;border-color:#007bff;padding:.5rem 1rem;font-size:1.25rem;line-height:1.5;border-radius:.3rem;width:100%;margin-bottom:10px;}.form-signin{width:100%;max-width:400px;padding:15px;margin:auto;}.form-floating{margin-bottom:20px;}h1{text-align: center}p{margin-top:20px;}</style> </head> <body><main class='form-signin'> <form action='/' method='post'> <h1>Machine Setup</h1><div class='form-floating'><label>SSID</label><input type='text' class='form-control' name='ssid' value='" + String(memory.ssid) + "' required></div><div class='form-floating'><label>Password</label><input type='password' class='form-control' name='password' value='" + String(memory.password) + "' required></div><div class='form-floating'><label>URL</label><input type='text' class='form-control' name='url' value='" + String(memory.url) + "' required></div><div class='form-floating'><label>Machine ID</label><input type='number' class='form-control' name='machineId' value='" + String(memory.machineId) + "' required></div><button type='submit'>Save Settings</button><button type='button' onclick='resetEEPROM()'>Reset</button><button type='button' onclick='rebootDevice()'>Reboot</button><p>Versie: " + String(SOFTWARE_VERSION) + "<br>MAC Adres: " + getMacAddress() + "</p><p style='text-align: right'><a href='https://pruim.nl' style='color: #32C5FF'>Pruim IT</a></p></form></main> <script>function resetEEPROM() { if (confirm('Are you sure you want to reset to factory defaults? This action cannot be undone.')) { fetch('/reset-eeprom', { method: 'POST' }).then(response => { if (!response.ok) { console.error('Error resetting EEPROM'); } else { alert('EEPROM reset successful'); location.reload(); } }); } } function rebootDevice() { if (confirm('Are you sure you want to reboot the device?')) { fetch('/reboot-device', { method: 'POST' }).then(response => { if (!response.ok) { console.error('Error rebooting device'); } else { alert('Device rebooted successfully'); } }); } }</script> </body></html>";
     server.send(200, "text/html", formHtml);
   }
-
-
 }
 
 void handleResetEEPROM() {
@@ -329,21 +335,18 @@ void setup() {
   Serial.begin(115200);
   Serial.println("Systeem wordt opgestart.");
 
-  // Loading Wifi Setup from EEPROM
-  EEPROM.begin(sizeof(struct settings));
-  EEPROM.get(0, memory);
+  // Setup OTA
+  ArduinoOTA.setHostname("ESP32");
+  ArduinoOTA.begin();
+  Serial.println("OTA Initialized");
+
 
   // Turn off LED
   digitalWrite(LED, HIGH);
 
-  // Format the new hostname using version number and machine ID
-  String hostname = "ESP_V" + String(SOFTWARE_VERSION) + "_MACHINE" + String(memory.machineId);
-
-  // Setup OTA with the new hostname
-  ArduinoOTA.setHostname(hostname.c_str());
-  ArduinoOTA.begin();
-  Serial.print("OTA Initialized with Hostname: ");
-  Serial.println(hostname);
+  // Loading Wifi Setup from EEPROM
+  EEPROM.begin(sizeof(struct settings));
+  EEPROM.get(0, memory);
 
   byte tries = 0;
 
@@ -352,15 +355,19 @@ void setup() {
 
   Serial.print("Connecting To: ");
   Serial.println(memory.ssid);
+
   Serial.print("Wifi wordt verbonden.");
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
     Serial.print(".");
     if (tries++ > 30) {
-      String softAPSSID = "Setup Portal-V" + String(SOFTWARE_VERSION);
+      WiFi.mode(WIFI_AP);
 
-      WiFi.softAP(softAPSSID.c_str(), "1234567890");
+      // Create the SoftAP SSID with the device's MAC address
+      String softAPSSID = "AP-Machine-ID" + String(memory.machineId);
+
+      WiFi.softAP(softAPSSID, "1234567890");
       Serial.println();
       Serial.println("WiFi Failed, Switching to AP mode.");
       Serial.print("SSID: ");
@@ -380,6 +387,7 @@ void setup() {
     Serial.println();
     Serial.print(WiFi.macAddress());
     Serial.println();
+    
   }
 
   // Define Pinmodes.
@@ -387,7 +395,7 @@ void setup() {
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 
   // Create Telnet server
-  setupTelnet();
+   setupTelnet();
 
   // Create webserver handles
   server.on("/", handlePortal);
@@ -395,6 +403,7 @@ void setup() {
   server.on("/reboot-device", HTTP_POST, handleRebootDevice);
   server.begin();
 }
+
 
 
 void loop() {
